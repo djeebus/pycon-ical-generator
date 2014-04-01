@@ -12,11 +12,13 @@ namespace ConsoleApp
 {
 	class Program
 	{
+		public static readonly Uri RootUri = new Uri("https://us.pycon.org/2014/schedule/talks/list/");
+		
 		static void Main(string[] args)
 		{
 			var pyconTimezone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
 
-			var doc = GetHtmlDocument(new Uri("https://us.pycon.org/2014/schedule/talks/list/"));
+			var doc = GetHtmlDocument(RootUri);
 
 			var formattedTalks = GetTalks(pyconTimezone, doc);
 			Console.WriteLine("There are {0} talks, writing to iCal file ... ", formattedTalks.Count());
@@ -86,7 +88,7 @@ namespace ConsoleApp
 			yield return "PRODID:-//djeebus/pycon2014//NONSGML v1.0//EN";
 			yield return "VERSION:2.0";
 			yield return "CALSCALE:GREGORIAN";
-			yield return "X-WR-CALNAME:Pycon 2014 Schedule";
+			yield return "X-WR-CALNAME:PyCon 2014 Schedule";
 			yield return string.Format("X-WR-TIMEZONE:{0}", FormatTimeZone(timezone));
 			//yield return "BEGIN:VTIMEZONE";
 			//yield return string.Format("TZID:{0}", FormatTimeZone(timezone));
@@ -174,11 +176,11 @@ END:VTIMEZONE", FormatTimeZone(timezone));
 				string.Format("DTSTART;TZID=\"{1}\":{0}", FormatDateTime(talk.Start, timezone), FormatTimeZone(timezone)),
 				string.Format("DTEND;TZID=\"{1}\":{0}", FormatDateTime(talk.End, timezone), FormatTimeZone(timezone)),
 				string.Format("DTSTAMP:{0}", FormatDateTime(DateTime.UtcNow, timezone)),
-				string.Format("UID:pycon-2014-2.{0}", talk.Id),
+				string.Format("UID:pycon-2014-{0}", talk.Id),
 				string.Format("CREATED:{0}", FormatDateTime(DateTime.UtcNow, timezone)),
-				string.Format("DESCRIPTION:{0}\n\n{1}", (talk.Description ?? string.Empty).Replace(",", @"\,"), talk.Url),
+				string.Format("DESCRIPTION:{0} Details: {1}", (talk.Description ?? string.Empty).Replace(",", @"\,"), talk.Url),
 				string.Format("LOCATION:{0}", talk.Location),
-				string.Format("X-ALT-DESC;FMTTYPE=text/html:<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2//EN\"><HTML><BODY>{0}<br><a href='{1}'>{1}</a></BODY></HTML>", talk.Description.Replace(",", @"\,"), talk.Url),
+				string.Format("X-ALT-DESC;FMTTYPE=text/html:<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2//EN\"><HTML><BODY>{0}<br>Details: <a href='{1}'>{1}</a></BODY></HTML>", talk.Description.Replace(",", @"\,"), talk.Url),
 				string.Format("LAST-MODIFIED:{0}", FormatDateTime(DateTime.UtcNow, timezone)),
 				string.Format("URL:{0}", talk.Url),
 				string.Format("SUMMARY:{0}", talk.Title),
@@ -195,7 +197,6 @@ END:VTIMEZONE", FormatTimeZone(timezone));
 		class Talk
 		{
 			public int Id { get; set; }
-			public static readonly Uri RootUri = new Uri("https://us.pycon.org/2014/schedule/talks/list/");
 			public string Title { get; set; }
 			public Uri Url { get; set; }
 			public string Subtitle { get; set; }
@@ -237,7 +238,7 @@ END:VTIMEZONE", FormatTimeZone(timezone));
 			var day = _dateMap[parts[0]];
 
 			talk.Title = CleanEscapeCharacters(title);
-			talk.Url = new Uri(Talk.RootUri, link);
+			talk.Url = new Uri(RootUri, link);
 			talk.Description = CleanEscapeCharacters(description);
 			talk.Subtitle = CleanEscapeCharacters(subtitle);
 			talk.Start = ParseTime(day, timeParts[0], timezone);
